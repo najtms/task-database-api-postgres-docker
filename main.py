@@ -1,3 +1,5 @@
+from email import message
+
 from fastapi import FastAPI, Request, HTTPException, Response
 from pydantic import BaseModel,field_validator
 import sqlite3
@@ -54,7 +56,7 @@ async def health():
 @app.get("/tasks", summary="Get all tasks")
 async def get_tasks():
     with get_db_connection() as con:
-           with con.cursor() as cur:
+        with con.cursor() as cur:
             cur.execute("SELECT * FROM tasks")
             taskx = cur.fetchall()
     return taskx
@@ -62,13 +64,13 @@ async def get_tasks():
 
 @app.get("/tasks/{id}", summary="Get task by ID")
 async def get_task_by_id(id: int):
-     with get_db_connection() as con:
-            with con.cursor() as cur:
-                id_valued = cur.execute("SELECT * FROM tasks WHERE id = %s", (id,))
-                task = id_valued.fetchone()
-                if task:
+    with get_db_connection() as con:
+        with con.cursor() as cur:
+            id_valued = cur.execute("SELECT * FROM tasks WHERE id = %s", (id,))
+            task = id_valued.fetchone()
+            if task:
                     return task
-                return {"error": f"Task {id} not found"}
+            return {"error": f"Task {id} not found"}
 
 ###############################################################################
 class Task(BaseModel):
@@ -84,13 +86,15 @@ class Task(BaseModel):
 
 @app.post("/tasks", status_code=201)
 async def create_task(task: Task):
+    
+    with get_db_connection() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                "INSERT INTO tasks(title, done) VALUES(%s, %s)",
+                (task.title, False)
+            )
 
-    cur.execute(
-        "INSERT INTO tasks(title, done) VALUES(?, ?)",
-        (task.title, False)
-    )
-
-    con.commit()
+            con.commit()
 
     return task
 
@@ -111,48 +115,51 @@ class UpdateTask(BaseModel):
 
 @app.put("/tasks/{id}", summary="Update a task")
 async def update_task(id: int, req: UpdateTask):
+    with get_db_connection() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                "SELECT * FROM tasks WHERE id = %s",
+                (id,)
+            )
 
-    cur.execute(
-        "SELECT * FROM tasks WHERE id = ?",
-        (id,)
-    )
+            task = cur.fetchone()
 
-    task = cur.fetchone()
+            if task is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Task {id} not found"
+                )
 
-    if task is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Task {id} not found"
-        )
+            cur.execute(
+                """
+                UPDATE tasks 
+                SET title = %s, done = %s
+                WHERE id = %s
+                """,
+                (req.title, req.done, id)
+            )
 
-    cur.execute(
-        """
-        UPDATE tasks 
-        SET title = ?, done = ?
-        WHERE id = ?
-        """,
-        (req.title, req.done, id)
-    )
+            con.commit()
 
-    con.commit()
-
-    return {
-        "id": id,
-        "title": req.title,
-        "done": req.done
-    }
+            return {
+                "id": id,
+                "title": req.title,
+                "done": req.done
+            }
 
 
 
 
 @app.delete("/tasks/{id}", status_code=204, summary="Delete a task")
 async def delete_task(id: int):
-    cur.execute("DELETE FROM tasks WHERE id = ?", (id,))
+    with get_db_connection() as con:
+        with con.cursor() as cur:
+            cur.execute("DELETE FROM tasks WHERE id = %s", (id,))
 
-    if cur.rowcount > 0:
-        return Response(status_code=204)
+            if cur.rowcount > 0:
+                return Response(status_code=204)
 
-    raise HTTPException(
-        status_code=404,
-        detail=f"Task {id} not found"
-    )
+            raise HTTPException(
+                status_code=404,
+                detail=f"Task {id} not found"
+            )
