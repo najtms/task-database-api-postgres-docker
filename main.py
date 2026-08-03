@@ -37,12 +37,9 @@ def init_db():
 def on_startup():
     init_db()
 #####################################################################################
-
-
 @app.get("/test")
 async def test():
     return {}
-
 ###############################################################################
 @app.get("/", summary="API information")
 async def root():
@@ -57,7 +54,7 @@ async def health():
 @app.get("/tasks", summary="Get all tasks")
 async def get_tasks():
     with get_db_connection() as con:
-        with con.cursor() as cur:
+           with con.cursor() as cur:
             cur.execute("SELECT * FROM tasks")
             taskx = cur.fetchall()
     return taskx
@@ -65,11 +62,13 @@ async def get_tasks():
 
 @app.get("/tasks/{id}", summary="Get task by ID")
 async def get_task_by_id(id: int):
-    id_valued = cur.execute("SELECT * FROM tasks WHERE id = ?", (id,))
-    task = id_valued.fetchone()
-    if task:
-        return task
-    return {"error": f"Task {id} not found"}
+     with get_db_connection() as con:
+            with con.cursor() as cur:
+                id_valued = cur.execute("SELECT * FROM tasks WHERE id = %s", (id,))
+                task = id_valued.fetchone()
+                if task:
+                    return task
+                return {"error": f"Task {id} not found"}
 
 ###############################################################################
 class Task(BaseModel):
