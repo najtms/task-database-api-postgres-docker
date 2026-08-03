@@ -1,38 +1,41 @@
 from fastapi import FastAPI, Request, HTTPException, Response
 from pydantic import BaseModel,field_validator
 import sqlite3
+import os
+from dotenv import load_dotenv
+import psycopg
 app = FastAPI()
 
 ################################################################################
 #DATABASE
-tasks = []
-import sqlite3
-
-con = sqlite3.connect("task.db")
+load_dotenv()
 
 
-#
-cur = con.cursor()
-#
-## Creation of table
-cur.execute("CREATE TABLE IF NOT EXISTS tasks(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, done BOOLEAN)")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-cur.execute("SELECT COUNT(*) FROM tasks")
-COUNT = cur.fetchone()[0]
+def get_db_connection():
+    return psycopg.connect(DATABASE_URL)
 
-if COUNT ==0:
-    cur.executemany("INSERT INTO tasks(title, done) VALUES(?, ?)", [
-        ("Task 0", True),
-        ("Task 1", True),
-        ("Task 2", False)
-    ])
+def init_db():
+    with get_db_connection() as con:
+        with con.cursor() as cur:
+            cur.execute("CREATE TABLE IF NOT EXISTS tasks(id SERIAL PRIMARY KEY, title TEXT, done BOOLEAN)")
 
-con.commit()
+            cur.execute("SELECT COUNT(*) FROM tasks")
+            COUNT = cur.fetchone()[0]
 
+            if COUNT ==0:
+                cur.executemany("INSERT INTO tasks(title, done) VALUES(%s, %s)", [
+                    ("Task 0", True),
+                    ("Task 1", True),
+                    ("Task 2", False)
+                ])
+        con.commit()
 
-
-
-
+#####################################################################################
+@app.on_event("startup")
+def on_startup():
+    init_db()
 #####################################################################################
 
 
@@ -53,8 +56,10 @@ async def health():
 ###############################################################################
 @app.get("/tasks", summary="Get all tasks")
 async def get_tasks():
-    cur.execute("SELECT * FROM tasks")
-    taskx = cur.fetchall()
+    with get_db_connection() as con:
+        with con.cursor() as cur:
+            cur.execute("SELECT * FROM tasks")
+            taskx = cur.fetchall()
     return taskx
 
 
