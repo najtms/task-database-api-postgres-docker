@@ -9,11 +9,11 @@
          |___/
 ```
 
-# Task API
+# Task API — PostgreSQL + Docker
 
-A simple CRUD REST API built with **FastAPI** and SQLite for the FlyRank Backend Internship assignment.
+A CRUD REST API built with **FastAPI**, running against a **PostgreSQL** database inside Docker. The entire stack — API and database — starts with a single command: `docker compose up`.
 
----
+FlyRank Backend Internship Assignment.
 
 ## Features
 
