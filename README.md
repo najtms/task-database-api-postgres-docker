@@ -9,133 +9,50 @@
          |___/
 ```
 
+```markdown
 # Task API — PostgreSQL + Docker
 
-A CRUD REST API built with **FastAPI**, running against a **PostgreSQL** database inside Docker. The entire stack — API and database — starts with a single command: `docker compose up`.
+A CRUD REST API built with **FastAPI**, running against a **PostgreSQL** database inside Docker. The entire stack — API and database — starts with a single command.
 
-FlyRank Backend Internship Assignment.
+FlyRankAI Backend Internship Assignment.
 
-## Features
+---
 
-* Create tasks
-* Read all tasks
-* Read a task by ID
-* Update tasks
-* Delete tasks
-* SQLite database persistence
-* Automatic database creation
-* Automatic seeding with example tasks
-* Automatic Swagger UI documentation
+## Quick Start
 
+```bash
+git clone https://github.com/najtms/task-database-api-postgres-docker.git
+cd task-database-api-postgres-docker
+cp .env.example .env
+docker compose up
+```
+
+The API will be available at `http://localhost:8000`, with interactive docs at `http://localhost:8000/docs`.
+
+On first run, the `tasks` table is created automatically and seeded with three example tasks.
+
+---
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and adjust if needed:
+
+```
+DATABASE_URL=postgresql://postgres:dev@db:5432/tasks
+```
 ---
 
 ## Tech Stack
 
-* Python 3
-* FastAPI
-* Uvicorn
-* SQLite
+* Python 3.11
+* FastAPI + Uvicorn
+* PostgreSQL 18 (Docker)
+* psycopg
+* Docker Compose
 
 ---
 
-## Requirements
-
-* Python 3.10+
-* FastAPI
-* Uvicorn
-
----
-
-# Database
-
-## Why SQLite?
-
-SQLite was chosen because:
-
-* It uses a single database file
-* It requires zero setup or external database server
-* Data survives application restarts
-* It is lightweight and easy to distribute with the project
-
-The application automatically creates the database when it starts.
-
-The database file is:
-
-```
-tasks.db
-```
-
-It is created automatically and is usually **git-ignored**, so every new clone creates its own fresh database with the initial seeded data.
-
----
-
-## Database Initialization
-
-When the application starts:
-
-1. `tasks.db` is created if it does not exist
-2. The `tasks` table is created automatically
-3. Three example tasks are inserted if the database is empty
-
-Example seeded tasks:
-
-| id | title  | done  |
-| -- | ------ | ----- |
-| 1  | Task 0 | true  |
-| 2  | Task 1 | true  |
-| 3  | Task 2 | false |
-
-No manual database setup is required.
-
----
-
-# Installation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/najtms/task-database-api-postgres-docker.git
-cd task-database-api-postgres-docker.git
-```
-
-Install dependencies:
-
-```bash
-pip install fastapi uvicorn
-```
-
----
-
-# Run the Project
-
-Start the server with:
-
-```bash
-uvicorn main:app --reload
-```
-
-The API will be available at:
-
-```
-http://localhost:8000
-```
-
-Swagger UI:
-
-```
-http://localhost:8000/docs
-```
-
-Docker command :
-```
-docker run --name taskdb -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=tasks -p 5432:5432 -v taskdata:/var/lib/postgresql/data -d postgres
-```
-
-
-
----
-
-# API Endpoints
+## API Endpoints
 
 | Method | Endpoint      | Description     |
 | ------ | ------------- | --------------- |
@@ -149,95 +66,56 @@ docker run --name taskdb -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=tasks -p 5432:5
 
 ---
 
-# Example curl Output
+## Example curl
 
 ```bash
 curl -i http://localhost:8000/tasks
 ```
-
-Example response:
 
 ```http
 HTTP/1.1 200 OK
 content-type: application/json
 
 [
-  {
-    "id":1,
-    "title":"Task 0",
-    "done":true
-  },
-  {
-    "id":2,
-    "title":"Task 1",
-    "done":true
-  },
-  {
-    "id":3,
-    "title":"Task 2",
-    "done":false
-  }
+  {"id":1,"title":"Task 0","done":true},
+  {"id":2,"title":"Task 1","done":true},
+  {"id":3,"title":"Task 2","done":false}
 ]
 ```
 
 ---
 
-# Swagger UI
+## Database
 
-![Swagger UI](images/Swagger.png)
+![Database screenshot](images/db-screenshot.png)
 
----
-
-# Database Browser Screenshot
-
-Database opened using **DB Browser for SQLite**:
-
-![SQLite Database](images/gui.png)
-
----
-
-# Example SQL Query
-
-Example query executed in DB Browser for SQLite:
-
-```sql
-SELECT * FROM tasks;
+Verified via:
+```bash
+docker exec -it w2k-db-1 psql -U postgres -d tasks -c "\dt"
+docker exec -it w2k-db-1 psql -U postgres -d tasks -c "SELECT * FROM tasks;"
 ```
 
-Result:
-
-| id | title  | done |
-| -- | ------ | ---- |
-| 1  | Task 0 | 1    |
-| 2  | Task 1 | 1    |
-| 3  | Task 2 | 0    |
-
 ---
 
-# Project Structure
+## Project Structure
 
 ```
-task-api/
-│── main.py
-│── tasks.db
-│── README.md
-|── .gitignore
+.
+├── main.py
+├── Dockerfile
+├── compose.yaml
+├── requirements.txt
+├── .env.example
+├── .gitignore
+├── README.md
 └── images/
-    ├── Swagger.png
-    └── Database.png
+    └── db-screenshot.png
 ```
-
-Note:
-
-`tasks.db` is generated automatically when the application starts and should normally be excluded from version control.
 
 ---
 
 ## Author
 
 **Muhamad Assaad**
-
 FlyRank Backend Internship Assignment
-
-```
 ```
