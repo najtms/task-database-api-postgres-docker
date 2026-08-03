@@ -94,8 +94,8 @@ No manual database setup is required.
 Clone the repository:
 
 ```bash
-git clone https://github.com/najtms/task-database-api.git
-cd task-database-api.git
+git clone https://github.com/najtms/task-database-api-postgres-docker.git
+cd task-database-api-postgres-docker.git
 ```
 
 Install dependencies:
